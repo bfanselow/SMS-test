@@ -14,6 +14,7 @@
 """
 
 import os
+import re
 import sys 
 import json
 import logging
@@ -64,12 +65,26 @@ def load_auth_credentials(auth_file_path):
   return( account_sid, auth_token, source_number )
 
 ##-----------------------------------------------------------------------------------
-def clean_dest_number(dest_number):
+def format_phone_number(dest_number):
   """
     Take our intput source phone-number and verify/reformat it into proper syntax
-    303-111-2222 => '+13031112222'
+    for Twilio SMS api:
+    Req  Args (str): phome-number
+    Return (str): formatted number -  input=303-111-2222 => output='+13031112222'
   """
 
+  ## remove any parens
+  dest_number = dest_number.replace("(","")
+  dest_number = dest_number.replace(")","")
+  ## remove any hyphens 
+  dest_number = dest_number.replace("-","")
+
+  ## remove any +1 (for simplicity so we can add it back since some input numbers won't have it_
+  dest_number = re.sub('^\+', '', dest_number)
+  dest_number = re.sub('^1', '', dest_number)
+
+  ## add +1 
+  dest_number = '+1' + dest_number 
 
   return(dest_number)
 
@@ -132,8 +147,7 @@ if __name__ == "__main__":
 
   (account_sid, auth_token, source_number) = load_auth_credentials(AUTH_FILE)
 
-  ## TODO
-  ## dest_number = clean_dest_number(dest_number)
+  dest_number = format_phone_number(dest_number)
 
   resp = sms_send(message, account_sid, auth_token, source_number, dest_number )
 
